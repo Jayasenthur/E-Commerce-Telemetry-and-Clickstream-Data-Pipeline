@@ -66,16 +66,49 @@ We must monitor and analyze __real-time telemetry data__ from our fleet of deliv
 
 ## Schema for the Database
 
-### Clickstream Data (DynamoDB Table: `ClickStreamData`)
+### 1. Clickstream Data (DynamoDB Table: `ClickStreamData`)
 
 | Attribute       | Type      | Desription                   |
 |-----------------|-----------|------------------------------|
-| Item_ID         |   String  | Unique ID of the item clicked|
-| Timestamp       |   String  | Timestamp of the click event |
-| Item_Name       |   String  | Name of the item clicked     |
-| Click_Counts    |   Number  | Number of clicks on the item |
+| `Item_ID`         |   String  | Unique ID of the item clicked|
+| `Timestamp`       |   String  | Timestamp of the click event |
+| `Item_Name`       |   String  | Name of the item clicked     |
+| `Click_Counts`    |   Number  | Number of clicks on the item |
 
-      
+### 2. Truck Telemetry Data (Snowflake Table: `TRUCK_TELEMETRY_DATA`)
+
+The schema follows __Type 2 Slowly Changing Dimensions (SCD)__ to maintain historical data.
+
+| Attribute                          | Type              | Description                                         |
+|------------------------------------|-------------------|----------------------------------------------------|
+| `TRUCK_ID`                         | STRING            | Unique ID of the truck.                            |
+| `LOAD_TIMESTAMP`                   | TIMESTAMP_NTZ     | Timestamp when the data was loaded.               |
+| `EFFECTIVE_START_DATE`             | TIMESTAMP_NTZ     | Start of the record's validity.                   |
+| `EFFECTIVE_END_DATE`               | TIMESTAMP_NTZ     | End of the record's validity.                     |
+| `IS_CURRENT`                       | BOOLEAN           | Indicates if this is the current record.          |
+| `GPS_LATITUDE`                     | FLOAT             | Latitude of the truck's location.                 |
+| `GPS_LONGITUDE`                    | FLOAT             | Longitude of the truck's location.                |
+| `GPS_ALTITUDE`                     | FLOAT             | Altitude of the truck's location.                 |
+| `GPS_SPEED`                        | FLOAT             | Speed of the truck.                               |
+| `VEHICLE_SPEED`                    | FLOAT             | Speed of the vehicle.                             |
+| `ENGINE_RPM`                       | FLOAT             | Engine RPM.                                       |
+| `FUEL_LEVEL`                       | FLOAT             | Fuel level in the tank.                           |
+| `ENGINE_TEMPERATURE`               | FLOAT             | Engine temperature.                               |
+| `OIL_PRESSURE`                     | FLOAT             | Oil pressure.                                     |
+| `BATTERY_VOLTAGE`                  | FLOAT             | Battery voltage.                                  |
+| `ODOMETER_READING`                 | FLOAT             | Odometer reading.                                 |
+| `FUEL_CONSUMPTION`                 | FLOAT             | Fuel consumption.                                 |
+| `BRAKE_STATUS`                     | STRING            | Brake status.                                    |
+| `TIRE_PRESSURE_FRONT_LEFT`         | FLOAT             | Front left tire pressure.                        |
+| `TIRE_PRESSURE_FRONT_RIGHT`        | FLOAT             | Front right tire pressure.                       |
+| `TIRE_PRESSURE_REAR_LEFT`          | FLOAT             | Rear left tire pressure.                         |
+| `TIRE_PRESSURE_REAR_RIGHT`         | FLOAT             | Rear right tire pressure.                        |
+| `TRANSMISSION_STATUS`              | STRING            | Transmission status.                             |
+| `ENVIRONMENT_TEMPERATURE`          | FLOAT             | Environmental temperature.                        |
+| `ENVIRONMENT_HUMIDITY`             | FLOAT             | Environmental humidity.                           |
+| `ENVIRONMENT_PRESSURE`             | FLOAT             | Environmental pressure.                           |
+
+
       
 
 
