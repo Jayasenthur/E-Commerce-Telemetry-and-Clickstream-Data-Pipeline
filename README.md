@@ -41,4 +41,6 @@ We must monitor and analyze __real-time telemetry data__ from our fleet of deliv
 
 ## Workflow
 
+![Workflow Digram](https://github.com/Jayasenthur/E-Commerce-Telemetry-and-Clickstream-Data-Pipeline/blob/main/image.gif)
+
 
