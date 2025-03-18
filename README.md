@@ -43,4 +43,42 @@ We must monitor and analyze __real-time telemetry data__ from our fleet of deliv
 
 ![Workflow Digram](https://github.com/Jayasenthur/E-Commerce-Telemetry-and-Clickstream-Data-Pipeline/blob/main/image.gif)
 
+1. __Data Generation__:
+    * Python scripts generate random __Clickstream Data__ (Item ID, Item Name, Click Count) and __Truck Telemetry Data__ (Truck ID, GPS Location, Engine Diagnostics, etc.).
+    * Data is sent to Kinesis Data Streams (`ClickDataStream` and `TruckTelemetry`).
+2. __Data Processing__:
+    * Lambda Functions:
+          * `KinesisToDynamoDBProcessor`: Processes Clickstream data and stores it in __DynamoDB__ (`ClickStreamData` table).
+          * `TruckDataProcessor`: Processes Truck Telemetry data and stores it in __S3__ (`kinesis-telemetry-data-bucket/telemetry-data/`).
+3. __Data Storage__:
+    * __DynamoDB__: Stores Clickstream data for real-time analysis.
+    * __S3__: Stores Truck Telemetry data as JSON files.
+4. Data Ingestion into Snowflake:
+    * __Firehose__: Loads Truck Telemetry data from Kinesis to S3.
+    * __Snowpipe__: Automatically ingests data from S3 into Snowflake (`TRUCK_TELEMETRY_DATA` table) using SQS notifications.
+5. __Data Visualization__:
+    * Streamlit UI:
+           * Fetches Clickstream data from DynamoDB.
+           * Fetches Truck Telemetry data from Snowflake.
+           * Displays data with visualizations for analysis.
+6. __Historical Data Management__:
+    * Snowflake table (`TRUCK_TELEMETRY_DATA`) uses __Type 2 Slowly Changing Dimensions (SCD)__ to maintain historical records of Truck Telemetry data.
+
+## Schema for the Database
+
+### Clickstream Data (DynamoDB Table: `ClickStreamData`)
+
+| Attribute       | Type      | Desription                   |
+|-----------------|-----------|------------------------------|
+| Item_ID         |   String  | Unique ID of the item clicked|
+| Timestamp       |   String  | Timestamp of the click event |
+| Item_Name       |   String  | Name of the item clicked     |
+| Click_Counts    |   Number  | Number of clicks on the item |
+
+      
+      
+
+
+      
+
 
