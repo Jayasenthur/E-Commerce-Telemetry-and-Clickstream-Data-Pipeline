@@ -335,5 +335,5 @@ The function writes the following item to the DynamoDB table:
 | Item_Name      | "Mobile Phone"                  |
 | Click_Counts   | 289      
 
-## Lamda function TruckDataProcessor 
+### Lamda function TruckDataProcessor 
 
