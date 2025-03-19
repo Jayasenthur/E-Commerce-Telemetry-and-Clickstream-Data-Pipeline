@@ -111,7 +111,7 @@ The schema follows __Type 2 Slowly Changing Dimensions (SCD)__ to maintain histo
 ## Steps to Set Up the Project
 ### 1. Setting Up IAM Permissions for Lambda Functions
 #### KinesisToDynamoDBProcessor Lambda Function:
-Attach the following policies to the Lambda function's execution role:
+The function requires the following IAM permissions to interact with Kinesis and DynamoDB:
     
 ```python
 {
@@ -174,11 +174,67 @@ __Input (Kinesis Record)__:
   "Click_Counts": 289
 }
 ```
+__Output (DynamoDB Item)__:
 
+| Attribute      | Value                           |
+|----------------|---------------------------------|
+| Item_ID        | "MOB001"                        |
+| Timestamp      | "2025-03-17T15:35:54.597252"   |
+| Item_Name      | "Mobile Phone"                  |
+| Click_Counts   | 289                              |
 
-   
+ ### Lamda code 
+ ```python
+import json
+import base64
+import boto3
+import logging
 
-      
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Initialize DynamoDB resource
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('ClickStreamData')  # Ensure this matches your table name
+
+def lambda_handler(event, context):
+    logger.info(f"Received event: {event}")
+    
+    for record in event['Records']:
+        try:
+            # Decode the base64-encoded Kinesis data
+            payload = base64.b64decode(record['kinesis']['data']).decode('utf-8')
+            data = json.loads(payload)
+            logger.info(f"Processing record: {data}")
+
+            # Validate the presence of required fields
+            required_fields = ['Item_ID', 'Timestamp', 'Item_Name', 'Click_Counts']
+            missing_fields = [field for field in required_fields if field not in data]
+            if missing_fields:
+                logger.error(f"Record is missing required fields: {missing_fields}. Data: {data}")
+                continue  # Skip this record
+
+            # Prepare the item for DynamoDB
+            item = {
+                'Timestamp': data['Timestamp'],  # Partition Key
+                'Item_ID': data['Item_ID'],      # Sort Key
+                'Item_Name': data['Item_Name'],
+                'Click_Counts': data['Click_Counts']
+            }
+            logger.info(f"Prepared item for DynamoDB: {item}")
+
+            # Insert data into DynamoDB
+            table.put_item(Item=item)
+            logger.info(f"Successfully inserted item: {item}")
+        except Exception as e:
+            logger.error(f"Error processing record: {e}")
+    
+    return {
+        'statusCode': 200,
+        'body': 'Processed {} records.'.format(len(event['Records']))
+    }
+```
 
 
       
