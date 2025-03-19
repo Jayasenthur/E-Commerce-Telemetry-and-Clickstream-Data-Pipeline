@@ -108,6 +108,75 @@ The schema follows __Type 2 Slowly Changing Dimensions (SCD)__ to maintain histo
 | `ENVIRONMENT_HUMIDITY`             | FLOAT             | Environmental humidity.                           |
 | `ENVIRONMENT_PRESSURE`             | FLOAT             | Environmental pressure.                           |
 
+## Steps to Set Up the Project
+### 1. Setting Up IAM Permissions for Lambda Functions
+#### KinesisToDynamoDBProcessor Lambda Function:
+Attach the following policies to the Lambda function's execution role:
+    
+```python
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "kinesis:GetRecords",
+        "kinesis:DescribeStream",
+        "kinesis:ListShards"
+      ],
+      "Resource": "arn:aws:kinesis:us-east-1:123456789012:stream/ClickDataStream"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:PutItem"
+      ],
+      "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ClickStreamData"
+    }
+  ]
+}
+```
+### Purpose of the Lambda Function KinesisToDynamoDBProcessor
+
+The Lambda function KinesisToDynamoDBProcessor plays a critical role in real-time data pipeline. Its purpose is to process Clickstream data from the Kinesis Data Stream (`ClickDataStream`) and store it in the DynamoDB table (`ClickStreamData`).
+1. __Real-Time Data Processing__:
+   * The function is triggered whenever new records are added to the Kinesis Data Stream (ClickDataStream).
+   * It processes the incoming Clickstream data in real time.
+2. __Data Transformation__:
+   * The function decodes the base64-encoded data from the Kinesis stream
+   * It extracts relevant fields (e.g., Item_ID, Timestamp, Item_Name, Click_Counts) from the incoming records.
+3. __Data Storage__:
+   * The function writes the processed Clickstream data into the DynamoDB table (ClickStreamData).
+   * Each record is stored as a new item in the DynamoDB table.
+4. __Scalability and Reliability__:
+   * The function is designed to handle large volumes of data efficiently.
+   * It ensures that data is reliably stored in DynamoDB for further analysis and reporting.
+
+### How It Works
+1. __Trigger__:
+    * The function is triggered by the Kinesis Data Stream (`ClickDataStream`) whenever new records are added.
+2. __Data Processing__ :
+    * The function processes each record in the Kinesis stream:
+       * Decodes the base64-encoded data.
+       * Parses the JSON payload to extract Clickstream data.
+3. __Data Storage__:
+    * The function inserts the processed data into the DynamoDB table (`ClickStreamData`) using the PutItem operation.
+4. __Error Handling__:
+    * The function includes error handling to ensure that any issues (e.g., invalid data, DynamoDB errors) are logged and do not disrupt the pipeline.
+
+### Example Input and Output
+__Input (Kinesis Record)__:
+```json
+{
+  "Item_ID": "MOB001",
+  "Timestamp": "2025-03-17T15:35:54.597252",
+  "Item_Name": "Mobile Phone",
+  "Click_Counts": 289
+}
+```
+
+
+   
 
       
 
