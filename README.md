@@ -632,6 +632,121 @@ Add a queue policy to allow S3 to send notifications:
 3. Check Snowflake:
     * Verify that the file is auto-ingested into the Snowflake table (TRUCK_TELEMETRY_DATA).
 
+## Snowflake Setup
+### 1. Create Table in Snowflake:
+The table will store the Truck Telemetry data. Use the following SQL command to create the table:
+
+```sql
+CREATE OR REPLACE TABLE TRUCK_TELEMETRY_DATA (
+    -- Truck Metadata
+    TRUCK_ID STRING NOT NULL,
+    LOAD_TIMESTAMP TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    EFFECTIVE_START_DATE TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    EFFECTIVE_END_DATE TIMESTAMP_NTZ DEFAULT NULL,
+    IS_CURRENT BOOLEAN DEFAULT TRUE,
+
+    -- GPS Location
+    GPS_LATITUDE FLOAT,
+    GPS_LONGITUDE FLOAT,
+    GPS_ALTITUDE FLOAT,
+    GPS_SPEED FLOAT,
+
+    -- Vehicle Speed
+    VEHICLE_SPEED FLOAT,
+
+    -- Engine Diagnostics
+    ENGINE_RPM FLOAT,
+    FUEL_LEVEL FLOAT,
+    ENGINE_TEMPERATURE FLOAT,
+    OIL_PRESSURE FLOAT,
+    BATTERY_VOLTAGE FLOAT,
+
+    -- Odometer Reading
+    ODOMETER_READING FLOAT,
+
+    -- Fuel Consumption
+    FUEL_CONSUMPTION FLOAT,
+
+    -- Vehicle Health and Maintenance
+    BRAKE_STATUS STRING,
+    TIRE_PRESSURE_FRONT_LEFT FLOAT,
+    TIRE_PRESSURE_FRONT_RIGHT FLOAT,
+    TIRE_PRESSURE_REAR_LEFT FLOAT,
+    TIRE_PRESSURE_REAR_RIGHT FLOAT,
+    TRANSMISSION_STATUS STRING,
+
+    -- Environmental Conditions
+    ENVIRONMENT_TEMPERATURE FLOAT,
+    ENVIRONMENT_HUMIDITY FLOAT,
+    ENVIRONMENT_PRESSURE FLOAT
+);
+```
+
+### 2. Create an External Stage in Snowflake
+An external stage points to the S3 bucket where the Truck Telemetry data is stored. Use the following SQL command to create the stage:
+```sql
+-- Create an external stage pointing to the S3 bucket
+CREATE OR REPLACE STAGE truck_telemetry_stage
+  URL = 's3://kinesis-telemetry-data-bucket/telemetry-data/'
+  CREDENTIALS = (
+    AWS_KEY_ID = 'your-aws-access-key-id'
+    AWS_SECRET_KEY = 'your-aws-secret-access-key'
+  )
+  FILE_FORMAT = (TYPE = 'JSON');
+```
+Parameters:
+* URL: The S3 bucket and folder path (e.g., `s3://kinesis-telemetry-data-bucket/telemetry-data/`).
+* CREDENTIALS: AWS access key and secret key for accessing the S3 bucket.
+* FILE_FORMAT: Specifies the file format (e.g., JSON).
+
+## 3. Create a Pipe in Snowflake
+A pipe automates the process of loading data from the external stage into the Snowflake table. Use the following SQL command to create the pipe:
+
+```sql
+-- Create a pipe to auto-ingest data from S3 into Snowflake
+CREATE OR REPLACE PIPE truck_telemetry_pipe
+  AUTO_INGEST = TRUE
+  AS
+  COPY INTO TRUCK_TELEMETRY_DATA
+  FROM @truck_telemetry_stage
+  FILE_FORMAT = (TYPE = 'JSON');
+```
+Parameters:
+* AUTO_INGEST: Enables automatic ingestion of data from S3 using SQS notifications.
+* COPY INTO: Specifies the target table (`TRUCK_TELEMETRY_DATA`) and the source stage (`@truck_telemetry_stage`).
+  
+## 4. Snowflake ARN:
+The Snowflake ARN is required to configure the SQS queue for auto-ingest. Follow these steps to get the ARN:
+1. Run the Following Query in Snowflake:
+```sql
+DESC PIPE truck_telemetry_pipe;
+```
+2. Find the notification_channel Field:
+* The notification_channel field contains the ARN of the SQS queue created by Snowflake.
+* Example `ARN: arn:aws:sqs:us-east-1:123456789012:sf-snowpipe-queue`
+
+3. Use the ARN in S3 Event Notifications:
+* When enabling event notifications in the S3 bucket, specify this ARN as the SQS queue.
+
+## 5. Verify the Setup
+1. Upload a Test File:
+   * Upload a test JSON file to the telemetry-data/ folder in the S3 bucket.
+   * Example file: telemetry-data/test.json.
+2. Check Snowpipe Status:
+   * Run the following query to check the status of the pipe:
+```sql
+SELECT SYSTEM$PIPE_STATUS('truck_telemetry_pipe');
+```
+3. Check the Snowflake Table:
+   * Run the following query to verify that the data is loaded into the table:
+```sql
+SELECT * FROM TRUCK_TELEMETRY_DATA LIMIT 10;
+```
+
+
+
+
+
 
            
 
