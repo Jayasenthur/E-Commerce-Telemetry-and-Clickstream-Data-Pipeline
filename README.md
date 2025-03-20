@@ -138,6 +138,12 @@ The function requires the following IAM permissions to interact with Kinesis and
   ]
 }
 ```
+## Kinesis Trigger for Lambda Function
+### KinesisToDynamoDBProcessor:
+* Go to the __Lambda Console__.
+* Add a trigger for the `ClickDataStream` Kinesis stream.
+* Set the __Batch Size__ (e.g., 100) and __Batch Window__ (e.g., 60 seconds).
+
 ## Purpose of the Lambda Function KinesisToDynamoDBProcessor
 
 The Lambda function KinesisToDynamoDBProcessor plays a critical role in real-time data pipeline. Its purpose is to process Clickstream data from the Kinesis Data Stream (`ClickDataStream`) and store it in the DynamoDB table (`ClickStreamData`).
@@ -335,5 +341,205 @@ The function writes the following item to the DynamoDB table:
 | Item_Name      | "Mobile Phone"                  |
 | Click_Counts   | 289      
 
-### Lamda function TruckDataProcessor 
+## Purpose of Lamda function TruckDataProcessor 
+The `TruckDataProcessor` Lambda function is designed to:
+* Process real-time Truck Telemetry data from the Kinesis Data Stream (`TruckTelemetry`).
+* Store the processed data in an __S3__ bucket (`kinesis-telemetry-data-bucket/telemetry-data/`) as JSON files.
+* Enable further processing of the data (e.g., loading into `Snowflake` for analysis).
+
+## IAM Permissions for the Lambda Function
+The function requires the following IAM permissions to interact with Kinesis and S3:
+```python
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "kinesis:GetRecords",
+        "kinesis:DescribeStream",
+        "kinesis:ListShards"
+      ],
+      "Resource": "arn:aws:kinesis:us-east-1:123456789012:stream/TruckTelemetry"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::kinesis-telemetry-data-bucket/telemetry-data/*"
+    }
+  ]
+}
+```
+## Explanation of Permissions
+## Kinesis Permissions:
+* `GetRecords`: To read records from the Kinesis stream.
+* `DescribeStream`: To get details about the Kinesis stream.
+* `ListShards`: To list shards in the Kinesis stream.
+## S3 Permissions:
+* `PutObject`: To upload JSON files to the S3 bucket.
+
+## Kinesis Trigger for Lambda Function
+The `TruckDataProcessor` function is triggered by the Kinesis Data Stream (`TruckTelemetry`). Here’s how the trigger is configured:
+
+* Kinesis Stream: `TruckTelemetry`.
+* Batch Size: Number of records to process in a single invocation (e.g., 100).
+* Batch Window: Maximum time to wait before invoking the function (e.g., 60 seconds).
+
+## How the Lambda Function Works
+__Trigger__:
+
+* The function is triggered whenever new records are added to the Kinesis Data Stream (`TruckTelemetry`).
+__Data Processing__:
+* The function processes each record in the Kinesis stream:
+    * Decodes the base64-encoded data.
+    * Parses the JSON payload to extract Truck Telemetry data.
+__Data Storage__:
+* The function generates a unique file name using a timestamp.
+* Uploads the processed data as a JSON file to the S3 bucket (`kinesis-telemetry-data-bucket/telemetry-data/`).
+
+__Error Handling__:
+The function includes error handling to ensure that any issues (e.g., invalid data, S3 errors) are logged and do not disrupt the pipeline.
+
+## Lambda Code Explanation
+### 1. Importing Libraries
+```python
+import json
+import boto3
+import base64
+from datetime import datetime
+```
+* `json`: Used to parse JSON data.
+* `boto3`: AWS SDK for Python, used to interact with S3.
+* `base64`: Used to decode base64-encoded data from Kinesis.
+* `datetime`: Used to generate timestamps for file names.
+
+### 2. Initializing S3 Client
+```python
+s3_client = boto3.client('s3')
+S3_BUCKET_NAME = 'kinesis-telemetry-data-bucket'
+S3_FOLDER_NAME = 'telemetry-data/'
+```
+* Initializes a connection to the S3 service.
+* Specifies the S3 bucket and folder where the data will be stored.
+
+### 3. Lambda Handler Function
+```python
+def lambda_handler(event, context):
+    try:
+        # Check if 'Records' key exists in the event
+        if 'Records' not in event:
+            raise KeyError("'Records' key not found in the event. Ensure the event is from a Kinesis stream.")
+        
+        print(f"Number of records received: {len(event['Records'])}")
+```
+* The `lambda_handler` is the entry point for the Lambda function.
+* Checks if the event contains the `Records` key (to ensure it’s from a Kinesis stream).
+
+### 4. Processing Kinesis Records
+```python
+for record in event['Records']:
+    # Kinesis data is base64 encoded, so decode it
+    payload = base64.b64decode(record['kinesis']['data'])
+    telemetry_data = json.loads(payload)
+    
+    # Log the decoded data for debugging
+    print(f"Decoded telemetry data: {telemetry_data}")
+```
+* Iterates through each record in the Kinesis event.
+* Decodes the base64-encoded data from Kinesis and parses it into a JSON object.
+
+### 5. Generating a Unique File Name
+```python
+file_name = f"{S3_FOLDER_NAME}{datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f')}.json"
+```
+* Generates a unique file name using the current timestamp (e.g., telemetry-data/2025-03-17-15-35-54-597252.json).
+
+### 6. Uploading Data to S3
+```python
+s3_client.put_object(
+    Bucket=S3_BUCKET_NAME,
+    Key=file_name,
+    Body=json.dumps(telemetry_data))
+    
+print(f"Successfully stored telemetry data in S3: {file_name}")
+```
+* Uploads the processed data as a JSON file to the S3 bucket.
+
+### 7. Error Handling
+```python
+except KeyError as e:
+    print(f"KeyError: {str(e)}")
+    return {
+        'statusCode': 400,
+        'body': json.dumps(f"Error: {str(e)}")
+    }
+except Exception as e:
+    print(f"Unexpected error: {str(e)}")
+    return {
+        'statusCode': 500,
+        'body': json.dumps(f"Error: {str(e)}")
+    }
+```
+* Catches and logs any exceptions that occur during processing (e.g., decoding errors, S3 errors).
+
+### 8. Returning a Response
+```python
+return {
+    'statusCode': 200,
+    'body': json.dumps('Telemetry data stored in S3 successfully!')
+}
+```
+* Returns a response indicating success.
+
+### Example Input and Output
+#### Input (Kinesis Event):
+```json
+{
+  "Records": [
+    {
+      "kinesis": {
+        "data": "eyJ0cnVja19pZCI6ICJUUkswMDEiLCJnYW1lX2xvY2F0aW9uIjogeyJsYXRpdHVkZSI6IDM0LjA1MjMsImxvbmdpdHVkZSI6IC0xMTguMjU2N30sInZlaGljbGVfc3BlZWQiOiA2NS4wLCJlbmdpbmVfZGlhZ25vc3RpY3MiOiB7ImVuZ2luZV9ycG0iOiAyNTAwLCJmdWVsX2xldmVsIjogNzguNSwiZW5naW5lX3RlbXBlcmF0dXJlIjogMTg5LjN9LCJvZG9tZXRlcl9yZWFkaW5nIjogODAwMDAuMCwiZnVlbF9jb25zdW1wdGlvbiI6IDEwLjAsInZlaGljbGVfaGVhbHRoX2FuZF9tYWludGVuYW5jZSI6IHsiYnJha2Vfc3RhdHVzIjogIkdvb2QiLCJ0aXJlX3ByZXNzdXJlIjogeyJmcm9udF9sZWZ0IjogMzIuMCwiZnJvbnRfcmlnaHQiOiAzMi4wLCJyZWFyX2xlZnQiOiAzNS4wLCJyZWFyX3JpZ2h0IjogMzUuMH0sInRyYW5zbWlzc2lvbl9zdGF0dXMiOiAiT3BlcmF0aW9uYWwifSwiZW52aXJvbm1lbnRhbF9jb25kaXRpb25zIjogeyJ0ZW1wZXJhdHVyZSI6IDIyLjAsImh1bWlkaXR5IjogNTQuMCwiYXRtb3NwaGVyaWNfcHJlc3N1cmUiOiAxMDEzLjI1fSwidGltZXN0YW1wIjogIjIwMjUtMDMtMTdUMTU6MzU6NTQuNTk3MjUyIn0="
+      }
+    }
+  ]
+}
+```
+Decoded Data:
+```json
+{
+  "truck_id": "TRK001",
+  "gps_location": {
+    "latitude": 34.0523,
+    "longitude": -118.2567
+  },
+  "vehicle_speed": 65.0,
+  "engine_diagnostics": {
+    "engine_rpm": 2500,
+    "fuel_level": 78.5,
+    "engine_temperature": 189.3
+  },
+  "odometer_reading": 80000.0,
+  "fuel_consumption": 10.0,
+  "vehicle_health_and_maintenance": {
+    "brake_status": "Good",
+    "tire_pressure": {
+      "front_left": 32.0,
+      "front_right": 32.0,
+      "rear_left": 35.0,
+      "rear_right": 35.0
+    },
+    "transmission_status": "Operational"
+  },
+  "environmental_conditions": {
+    "temperature": 22.0,
+    "humidity": 54.0,
+    "atmospheric_pressure": 1013.25
+  },
+  "timestamp": "2025-03-17T15:35:54.597252"
+}
+```
+### Output (S3 File):
+The function uploads the above JSON data to the S3 bucket with a unique file name, e.g., `telemetry-data/2025-03-17-15-35-54-597252.json`.
 
