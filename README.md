@@ -543,3 +543,31 @@ Decoded Data:
 ### Output (S3 File):
 The function uploads the above JSON data to the S3 bucket with a unique file name, e.g., `telemetry-data/2025-03-17-15-35-54-597252.json`.
 
+### Steps to Create an S3 Bucket and Enable Notifications
+## 1. Create an S3 Bucket
+   1. Go to the S3 Console:
+        * Open the AWS S3 Console.
+   2. Create a New Bucket:
+        * Click Create bucket.
+        * Enter a Bucket name (e.g., `kinesis-telemetry-data-bucket`).
+        * Choose the Region (e.g., `us-east-1`).
+        * Leave other settings as default (or configure as needed).
+        * Click Create bucket.
+## 2.  Enable Event Notifications
+   1. Go to the Bucket Properties:
+        * In the S3 Console, select the bucket you created (`kinesis-telemetry-data-bucket`).
+        * Go to the __Properties__ tab.
+   2. Enable Event Notifications:
+        * Scroll down to the __Event notifications section__.
+        * Click __Create event notification__.
+   3. Configure Event Notification:
+        * Event name: `snowflake-auto-ingest` (or any name you prefer).
+        * Event types: Select `All object create events`.
+        * Prefix: `telemetry-data/` (to filter events for the specific folder).
+        * Send to: Choose __SQS Queue__.
+        * SQS Queue: Select the SQS queue created by Snowflake (e.g., `arn:aws:sqs:us-east-1:123456789012:sf-snowpipe-queue`).
+   4. Save the Configuration:
+        * Click Save changes.
+           
+
+
