@@ -569,6 +569,70 @@ The function uploads the above JSON data to the S3 bucket with a unique file nam
         * SQS Queue: Select the SQS queue created by Snowflake (e.g., `arn:aws:sqs:us-east-1:123456789012:sf-snowpipe-queue`).
    4. Save the Configuration:
         * Click Save changes.
+## 3. Verify the SQS Queue
+   1. Go to the SQS Console:
+        * Open the AWS SQS Console.
+   2. Check the Queue:
+        * Ensure the SQS queue (e.g., `sf-snowpipe-queue`) is receiving notifications from the S3 bucket.
+        * Go to the __Monitoring__ tab to check metrics like __Number of Messages Sent__.
+## 4. Permissions for S3 and SQS
+Ensure the following permissions are configured:
+
+__S3 Bucket Policy__
+Add a bucket policy to allow Snowflake to read from the bucket:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::123456789012:role/snowflake-role"
+      },
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::kinesis-telemetry-data-bucket",
+        "arn:aws:s3:::kinesis-telemetry-data-bucket/*"
+      ]
+    }
+  ]
+}
+```
+__SQS Queue Policy__
+Add a queue policy to allow S3 to send notifications:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "s3.amazonaws.com"
+      },
+      "Action": "SQS:SendMessage",
+      "Resource": "arn:aws:sqs:us-east-1:123456789012:sf-snowpipe-queue",
+      "Condition": {
+        "ArnLike": {
+          "aws:SourceArn": "arn:aws:s3:::kinesis-telemetry-data-bucket"
+        }
+      }
+    }
+  ]
+}
+```
+## 5. Verify the Setup
+1. Upload a Test File:
+    * Upload a test JSON file to the `telemetry-data/ folder` in the S3 bucket.
+    * Example file: `telemetry-data/test.json`.
+2. Check SQS Queue:
+    * Verify that the SQS queue receives a notification for the new file.
+3. Check Snowflake:
+    * Verify that the file is auto-ingested into the Snowflake table (TRUCK_TELEMETRY_DATA).
+
+
            
 
 
