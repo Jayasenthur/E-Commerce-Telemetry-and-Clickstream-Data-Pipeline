@@ -389,12 +389,13 @@ The `TruckDataProcessor` function is triggered by the Kinesis Data Stream (`Truc
 
 ## How the Lambda Function Works
 __Trigger__:
+The function is triggered whenever new records are added to the Kinesis Data Stream (`TruckTelemetry`).
 
-* The function is triggered whenever new records are added to the Kinesis Data Stream (`TruckTelemetry`).
 __Data Processing__:
 * The function processes each record in the Kinesis stream:
     * Decodes the base64-encoded data.
     * Parses the JSON payload to extract Truck Telemetry data.
+      
 __Data Storage__:
 * The function generates a unique file name using a timestamp.
 * Uploads the processed data as a JSON file to the S3 bucket (`kinesis-telemetry-data-bucket/telemetry-data/`).
