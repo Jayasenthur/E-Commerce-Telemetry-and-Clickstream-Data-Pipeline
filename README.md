@@ -743,11 +743,133 @@ SELECT SYSTEM$PIPE_STATUS('truck_telemetry_pipe');
 SELECT * FROM TRUCK_TELEMETRY_DATA LIMIT 10;
 ```
 
+## Streamlit UI
+This Streamlit UI code is designed to integrate real-time data from __AWS DynamoDB__ (for clickstream data) and __Snowflake__ (for truck telemetry data) to provide insights into e-commerce performance. Below is a detailed explanation of the code and its functionality:
 
+### Code Explanation
+#### 1. Imports and Configuration
+```python
+import streamlit as st
+import boto3
+from snowflake.connector import connect
+import pandas as pd
+```
+* Streamlit: Used to create the web-based UI.
+* Boto3: AWS SDK for Python, used to interact with AWS DynamoDB.
+* Snowflake Connector: Used to connect to Snowflake and fetch data.
+* Pandas: Used for data manipulation and visualization.
 
+#### 2. AWS DynamoDB Configuration
+```python
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+clickstream_table = dynamodb.Table('ClickStreamData')  # Replace with your DynamoDB table name
+```
+* `boto3.resource`: Initializes a connection to DynamoDB in the `us-east-1` region.
+* `clickstream_table`: Points to the DynamoDB table (`ClickStreamData`) where clickstream data is stored.
+#### 3. Snowflake Configuration
+```python
+snowflake_config = {
+    'user': 'user',
+    'password': 'password',
+    'account': 'accout',
+    'warehouse': 'TRUCK_TELEMETRY_WH',
+    'database': 'ECOMMERCE_DATA',
+    'schema': 'TRUCK_TELEMETRY'
+}
+```
+* Snowflake Connection Details: Includes user credentials, account details, warehouse, database, and schema to connect to Snowflake.
 
-
-
+#### 4. Fetching Clickstream Data from DynamoDB
+```python
+def fetch_clickstream_data():
+    response = clickstream_table.scan()
+    return response['Items']
+```
+* `scan()`: Retrieves all items from the DynamoDB table.
+* `response['Items']`: Returns the fetched data as a list of dictionaries.
            
+#### 5. Fetching Truck Telemetry Data from Snowflake
+```python
+def fetch_truck_telemetry_data():
+    conn = connect(**snowflake_config)
+    cursor = conn.cursor()
+    query = """
+    SELECT * FROM truck_telemetry_data where IS_CURRENT=TRUE
+    """
+    cursor.execute(query)
+    result = cursor.fetchall()
+    columns = [desc[0] for desc in cursor.description]
+    cursor.close()
+    conn.close()
+    return pd.DataFrame(result, columns=columns)
+```
+* `connect()`: Establishes a connection to Snowflake using the provided configuration.
+* `cursor.execute(query)`: Executes a SQL query to fetch current truck telemetry data (IS_CURRENT=TRUE).
+* `pd.DataFrame`: Converts the query result into a Pandas DataFrame for easier manipulation and visualization.
 
+#### 6. Streamlit UI
+```python
+st.title("From Clicks to Deliveries: Real-Time E-Commerce Data Dashboard")
+```
+* Title: Sets the title of the Streamlit app.
 
+#### 7. Sidebar Navigation
+```python
+page = st.sidebar.selectbox("Choose a page", ["Clickstream Data", "Truck Telemetry Data"])
+```
+* Sidebar: Provides a dropdown menu to navigate between two pages:
+     * Clickstream Data: Displays and visualizes clickstream data from DynamoDB.
+     * Truck Telemetry Data: Displays and visualizes truck telemetry data from Snowflake.
+
+#### 8. Clickstream Data Page
+```python
+if page == "Clickstream Data":
+    st.header("Clickstream Data Analysis")
+    st.write("### Real-Time Clickstream Data from DynamoDB")
+    
+    # Fetch and display clickstream data
+    clickstream_data = fetch_clickstream_data()
+    if clickstream_data:
+        df = pd.DataFrame(clickstream_data)
+        st.table(df)
+        
+        # Visualize clickstream data
+        st.write("### Clickstream Data Visualization")
+        st.bar_chart(df.set_index('Item_Name')['Click_Counts'])
+    else:
+        st.error("No clickstream data found.")
+```
+* `st.table(df)`: Displays the clickstream data in a table format.
+* `st.bar_chart()`: Visualizes the click counts for each item using a bar chart.
+* `Error Handling`: Displays an error message if no data is found.
+
+#### 9. Truck Telemetry Data Page
+```python
+elif page == "Truck Telemetry Data":
+    st.header("Truck Telemetry Data Analysis")
+    st.write("### Real-Time Truck Telemetry Data from Snowflake")
+    
+    # Fetch and display truck telemetry data
+    truck_data = fetch_truck_telemetry_data()
+    if not truck_data.empty:
+        st.write("#### Current Truck Telemetry Data")
+        st.dataframe(truck_data)
+        
+        # Visualize truck speed
+        st.write("### Truck Speed Visualization")
+        st.line_chart(truck_data.set_index('TRUCK_ID')['VEHICLE_SPEED'])
+    else:
+        st.error("No truck telemetry data found.")
+```
+* `st.dataframe(truck_data)`: Displays the truck telemetry data in an interactive table.
+* `st.line_chart()`: Visualizes the speed of each truck using a line chart.
+* Error Handling: Displays an error message if no data is found.
+
+#### How It Works
+1. __User Interaction__:
+* The user selects a page from the sidebar to view either clickstream data or truck telemetry data.
+2. __Data Fetching__:
+* For __Clickstream Data__: The app fetches data from DynamoDB and displays it in a table and bar chart.
+* For __Truck Telemetry Data__: The app fetches data from Snowflake and displays it in a table and line chart.
+3. __Real-Time Updates__:
+* The app dynamically updates the displayed data and visualizations whenever the underlying data changes.
