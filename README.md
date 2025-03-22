@@ -118,6 +118,24 @@ The schema follows __Type 2 Slowly Changing Dimensions (SCD)__ to maintain histo
 | `ENVIRONMENT_PRESSURE`             | FLOAT             | Environmental pressure.                           |
 
 ## Steps to Set Up the Project
+## 3. Prerequisites
+Before running the project, ensure you have the following:
+
+### Tools and Libraries
+- Python 3.x
+- Streamlit
+- Boto3 (AWS SDK for Python)
+- Snowflake Connector for Python
+
+### AWS Services
+- AWS Kinesis
+- AWS DynamoDB
+- AWS S3
+- AWS IAM (for permissions)
+
+### Snowflake
+- Snowflake account with a database and schema configured.
+  
 ### 1. Setting Up IAM Permissions for Lambda Functions
 ### KinesisToDynamoDBProcessor Lambda Function:
 The function requires the following IAM permissions to interact with Kinesis and DynamoDB:
@@ -1064,3 +1082,53 @@ graph TD
     * Stores processed TruckTelemetry Data.
 9. __Streamlit UI__:
     * Fetches TruckTelemetry Data from Snowflake and displays it.
+
+## Project Benefits
+
+### 1. Real-Time Insights
+- Provides real-time visibility into **e-commerce performance** (clickstream data) and **delivery operations** (truck telemetry data).
+- Enables quick decision-making based on up-to-date information.
+
+### 2. Scalability
+- Built on **AWS Kinesis** and **Snowflake**, which are highly scalable and can handle large volumes of data.
+- Suitable for small to large e-commerce businesses.
+
+### 3. Cost-Effective
+- Uses serverless AWS services (e.g., Kinesis, DynamoDB) and Snowflake's pay-as-you-go model, reducing infrastructure costs.
+
+### 4. Improved Customer Experience
+- Tracks user interactions (clickstream data) to identify trends and improve product offerings.
+- Monitors delivery operations (truck telemetry) to ensure timely and efficient deliveries.
+
+### 5. Easy Visualization
+- The **Streamlit UI** provides an intuitive and interactive way to visualize data, making it accessible to non-technical users.
+
+### 6. Integration Flexibility
+- Easily integrates with other AWS services (e.g., S3, Lambda) and third-party tools like Snowflake.
+
+## Challenges Faced
+
+### 1. Real-Time Data Ingestion
+- **Challenge**: Ensuring low-latency data ingestion from multiple sources (clickstream and truck telemetry).
+- **Solution**: Used **AWS Kinesis** for real-time data streaming and optimized the Python script for efficient data generation.
+
+### 2. Data Consistency
+- **Challenge**: Maintaining data consistency across DynamoDB and Snowflake.
+- **Solution**: Implemented proper error handling and retry mechanisms in the Python script and Kinesis Firehose.
+
+### 3. Snowflake Integration
+- **Challenge**: Setting up Snowflake to ingest data from S3 and ensuring proper schema mapping.
+- **Solution**: Used Snowflake's **COPY INTO** command and configured S3 notifications to trigger data ingestion.
+
+### 4. Streamlit UI Performance
+- **Challenge**: Fetching and displaying large datasets from DynamoDB and Snowflake in real-time.
+- **Solution**: Optimized queries and used pagination to load data incrementally in the Streamlit UI.
+
+### 5. AWS Permissions
+- **Challenge**: Managing IAM roles and permissions for Kinesis, DynamoDB, and S3.
+- **Solution**: Created a detailed IAM policy with the minimum required permissions and tested it thoroughly.
+
+### 6. Testing and Validation
+- **Challenge**: Simulating real-world scenarios for testing clickstream and truck telemetry data.
+- **Solution**: Used randomized data generation in the Python script and validated outputs at each stage (Kinesis, DynamoDB, S3, Snowflake).
+
