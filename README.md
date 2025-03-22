@@ -1,8 +1,17 @@
 # From Clicks to Deliveries: Maximizing E-commerce Performance with Real-Time Data Integration
 
-This project implements a real-time data pipeline for processing __Clickstream Data__ and __Truck Telemetry Data__ using AWS services (Kinesis, Lambda, DynamoDB, S3, Firehose) and Snowflake for data storage and analysis. The data is visualized using a __Streamlit UI__.
+## Project Overview
+This project, **From Clicks to Deliveries: Maximizing E-commerce Performance with Real-Time Data Integration**, aims to provide real-time insights into e-commerce performance by integrating clickstream data and truck telemetry data. The system processes data from multiple sources, stores it in appropriate databases, and visualizes it using a Streamlit UI.
+
+## Key Features
+- Real-time data ingestion using **AWS Kinesis**.
+- Clickstream data stored in **DynamoDB**.
+- Truck telemetry data stored in **Snowflake** via **S3**.
+- Interactive visualizations using **Streamlit**.
 
 # Technologies Used
+This project implements a real-time data pipeline for processing __Clickstream Data__ and __Truck Telemetry Data__ using AWS services (Kinesis, Lambda, DynamoDB, S3, Firehose) and Snowflake for data storage and analysis. The data is visualized using a __Streamlit UI__.
+
 * __AWS Services:__
      * __Kinesis Data Streams__: For real-time data ingestion.
      * __Lambda Functions__: For data processing.
