@@ -161,8 +161,25 @@ The schema follows __Type 2 Slowly Changing Dimensions (SCD)__ to maintain histo
 | `ENVIRONMENT_PRESSURE`             | FLOAT             | Environmental pressure.                           |
 
 ## Steps to Set Up the Project
+## 1. Prerequisites
+Before running the project, ensure you have the following:
 
-## 1. Python script 
+### Tools and Libraries
+- Python 3.x
+- Streamlit
+- Boto3 (AWS SDK for Python)
+- Snowflake Connector for Python
+
+### AWS Services
+- AWS Kinesis
+- AWS DynamoDB
+- AWS S3
+- AWS IAM (for permissions)
+
+### Snowflake
+- Snowflake account with a database and schema configured.
+
+## 2. Python script 
 This Python script generates random __ClickStream__ and __Truck Telemetry__ data and sends it to __AWS Kinesis Data Streams__ for real-time processing. Below is a detailed explanation of the script and its functionality:
 
 ### Script Overview
@@ -344,28 +361,8 @@ graph TD
     * Stores processed TruckTelemetry Data.
 9. __Streamlit UI__:
     * Fetches TruckTelemetry Data from Snowflake and displays it.
-
-
-
-## 3. Prerequisites
-Before running the project, ensure you have the following:
-
-### Tools and Libraries
-- Python 3.x
-- Streamlit
-- Boto3 (AWS SDK for Python)
-- Snowflake Connector for Python
-
-### AWS Services
-- AWS Kinesis
-- AWS DynamoDB
-- AWS S3
-- AWS IAM (for permissions)
-
-### Snowflake
-- Snowflake account with a database and schema configured.
   
-### 2. Setting Up IAM Permissions for Lambda Functions
+### 3. Setting Up IAM Permissions for Lambda Functions
 ### KinesisToDynamoDBProcessor Lambda Function:
 The function requires the following IAM permissions to interact with Kinesis and DynamoDB:
 * __Kinesis__: `GetRecords`, `DescribeStream`, `ListShards` for ClickDataStream.
