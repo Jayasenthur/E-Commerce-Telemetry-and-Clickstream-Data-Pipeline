@@ -100,8 +100,8 @@ __Data collected__
 * Data is sent to Kinesis Data Streams (`ClickDataStream` and `TruckTelemetry`).
 ### 2. __Data Processing__:
 * Lambda Functions:
-   * `KinesisToDynamoDBProcessor`: Processes Clickstream data and stores it in __DynamoDB__ (`ClickStreamData` table).
-   * `TruckDataProcessor`: Processes Truck Telemetry data and stores it in __S3__ (`kinesis-telemetry-data-bucket/telemetry-data/`).
+   * `KinesisToDynamoDBProcessor`: Processes Clickstream data from __Kinesis DataStream__ and stores it in __DynamoDB__ (`ClickStreamData` table).
+   * `TruckDataProcessor`: Processes Truck Telemetry data from __Kinesis DataStream__ and stores it in __S3__ (`kinesis-telemetry-data-bucket/telemetry-data/`).
 ### 3. __Data Storage__:
 * __DynamoDB__: Stores Clickstream data for real-time analysis.
 * __S3__: Stores Truck Telemetry data as JSON files.
