@@ -161,6 +161,192 @@ The schema follows __Type 2 Slowly Changing Dimensions (SCD)__ to maintain histo
 | `ENVIRONMENT_PRESSURE`             | FLOAT             | Environmental pressure.                           |
 
 ## Steps to Set Up the Project
+
+## 1. Python script 
+This Python script generates random __ClickStream__ and __Truck Telemetry__ data and sends it to __AWS Kinesis Data Streams__ for real-time processing. Below is a detailed explanation of the script and its functionality:
+
+### Script Overview
+1. Purpose 
+  * Generates random data for two types of streams:
+     * __ClickStream Data__: Simulates user interactions with e-commerce items (e.g., clicks on products).
+     * __Truck Telemetry Data__: Simulates real-time telemetry data from delivery trucks.
+  * Sends the generated data to AWS Kinesis Data Streams for further processing.
+2. Key Components:
+   * `Data Generation`: Functions to create random ClickStream and Truck Telemetry data.
+   * `AWS Kinesis Integration`: Sends the generated data to Kinesis streams.
+   * `Signal Handling`: Gracefully handles keyboard interrupts (e.g., Ctrl+C) to stop the script.
+
+### Code Explanation
+#### 1. Imports and AWS Kinesis Configuration
+```python
+import boto3
+import json
+import random
+import time
+from datetime import datetime
+import signal
+import sys
+
+# AWS Kinesis Configuration
+kinesis_client = boto3.client('kinesis', region_name='us-east-1')  # Replace with your region
+CLICK_STREAM_NAME = 'ClickDataStream'  # Replace with your Kinesis stream name
+TRUCK_STREAM_NAME = 'TruckTelemetry'   # Replace with your Kinesis stream name
+```
+* `boto3`: AWS SDK for Python, used to interact with AWS Kinesis.
+* `kinesis_client`: Initializes a connection to AWS Kinesis in the `us-east-1` region.
+* `Stream Names`: `CLICK_STREAM_NAME` and `TRUCK_STREAM_NAME` are the names of the Kinesis streams where data will be sent.
+#### 2. Generate Random ClickStream Data
+
+```python
+def generate_clickstream_data():
+    items = [
+        {"Item_ID": "MOB001", "Timestamp": datetime.utcnow().isoformat(), "Item_Name": "Mobile Phone", "Click_Counts": random.randint(100, 500)},
+        {"Item_ID": "LAP002", "Timestamp": datetime.utcnow().isoformat(),"Item_Name": "Laptop", "Click_Counts": random.randint(50, 300)},
+        {"Item_ID": "CAM003", "Timestamp": datetime.utcnow().isoformat(),"Item_Name": "Camera", "Click_Counts": random.randint(30, 200)}
+    ]
+    return random.choice(items)
+```
+* items: A list of dictionaries representing e-commerce items with random click counts.
+* random.choice(items): Randomly selects one item from the list to simulate user interaction.
+
+#### 3. Generate Random Truck Telemetry Data
+```python
+def generate_truck_telemetry_data():
+    truck_id = random.choice(["TRK001", "TRK002", "TRK003"])
+    telemetry_data = {
+        "TRUCK_ID": truck_id,
+        "LOAD_TIMESTAMP": datetime.utcnow().isoformat(),
+        "EFFECTIVE_START_DATE": datetime.utcnow().isoformat(),
+        "EFFECTIVE_END_DATE": None,  # NULL for current records
+        "IS_CURRENT": True,  # TRUE for current records
+        "GPS_LATITUDE": round(random.uniform(30.0, 40.0), 2),
+        "GPS_LONGITUDE": round(random.uniform(-120.0, -80.0), 2),
+        "GPS_ALTITUDE": round(random.uniform(0.0, 100.0), 2),
+        "GPS_SPEED": round(random.uniform(40.0, 70.0), 2),
+        "VEHICLE_SPEED": round(random.uniform(40.0, 70.0), 2),
+        "ENGINE_RPM": random.randint(2000, 3000),
+        "FUEL_LEVEL": round(random.uniform(50.0, 100.0), 2),
+        "ENGINE_TEMPERATURE": round(random.uniform(80.0, 100.0), 2),
+        "OIL_PRESSURE": round(random.uniform(30.0, 50.0), 2),
+        "BATTERY_VOLTAGE": round(random.uniform(12.0, 14.5), 2),
+        "ODOMETER_READING": round(random.uniform(80000.0, 120000.0), 2),
+        "FUEL_CONSUMPTION": round(random.uniform(10.0, 20.0), 2),
+        "BRAKE_STATUS": random.choice(["Good", "Needs Inspection"]),
+        "TIRE_PRESSURE_FRONT_LEFT": round(random.uniform(30.0, 35.0), 2),
+        "TIRE_PRESSURE_FRONT_RIGHT": round(random.uniform(30.0, 35.0), 2),
+        "TIRE_PRESSURE_REAR_LEFT": round(random.uniform(33.0, 37.0), 2),
+        "TIRE_PRESSURE_REAR_RIGHT": round(random.uniform(33.0, 37.0), 2),
+        "TRANSMISSION_STATUS": random.choice(["Operational", "Needs Maintenance"]),
+        "ENVIRONMENT_TEMPERATURE": round(random.uniform(10.0, 35.0), 2),
+        "ENVIRONMENT_HUMIDITY": round(random.uniform(20.0, 80.0), 2),
+        "ENVIRONMENT_PRESSURE": round(random.uniform(1000.0, 1020.0), 2),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    return telemetry_data
+```
+* `truck_id`: Randomly selects a truck ID from a predefined list.
+* `Telemetry Data`: Simulates various truck metrics (e.g., GPS coordinates, speed, fuel level, etc.).
+* `datetime.utcnow().isoformat()`: Adds a timestamp to the data.
+#### 4. Signal Handling
+```python
+def signal_handler(sig, frame):
+    print("\nKeyboard interrupt detected. Stopping the script gracefully...")
+    sys.exit(0)
+
+# Register the signal handler
+signal.signal(signal.SIGINT, signal_handler)
+```
+* `signal_handler`: Handles keyboard interrupts (e.g., Ctrl+C) to stop the script gracefully.
+* `signal.signal()`: Registers the handler for the SIGINT signal.
+
+####  5. Send Data to Kinesis
+```python
+def send_to_kinesis(stream_name, data):
+    response = kinesis_client.put_record(
+        StreamName=stream_name,
+        Data=json.dumps(data),
+        PartitionKey="partition_key"
+    )
+    return response
+```
+* `put_record()`: Sends a single record to the specified Kinesis stream.
+* `json.dumps(data)`: Converts the data dictionary to a JSON string.
+* `PartitionKey`: A key used to distribute data across shards in the stream.
+
+#### 6. Main Function
+```python
+def main():
+    while True:
+        try:
+            # Generate and send ClickStream data
+            clickstream_data = generate_clickstream_data()
+            click_response = send_to_kinesis(CLICK_STREAM_NAME, clickstream_data)
+            print(f"Sent ClickStream Data: {clickstream_data} | Response: {click_response}")
+
+            # Generate and send TruckTelemetry data
+            truck_data = generate_truck_telemetry_data()
+            truck_response = send_to_kinesis(TRUCK_STREAM_NAME, truck_data)
+            print(f"Sent TruckTelemetry Data: {truck_data} | Response: {truck_response}")
+
+            # Wait for 1 minute before sending the next batch of data
+            print("Generating and sending data...")
+            time.sleep(15)
+        
+        except KeyboardInterrupt:
+            print("\nScript stopped by user.")
+
+if __name__ == "__main__":
+    main()
+```
+* Infinite Loop: Continuously generates and sends data to Kinesis.
+* time.sleep(15): Waits for 15 seconds before generating the next batch of data.
+* Error Handling: Catches keyboard interrupts to stop the script gracefully.
+### How It Works
+1. Data Generation:
+   * Random ClickStream and Truck Telemetry data are generated using the respective functions.
+2. Data Sending:
+   * The generated data is sent to the appropriate Kinesis streams using the send_to_kinesis() function.
+3. Real-Time Simulation:
+   * The script runs indefinitely, simulating real-time data generation and streaming.
+4. Graceful Shutdown:
+   * The script can be stopped using Ctrl+C, and it will exit gracefully.
+
+## Unified Workflow Diagram
+```mermaid
+graph TD
+    A[Python Script] -->|Generates ClickStream Data| B(Kinesis Stream: ClickStreamData)
+    A -->|Generates TruckTelemetry Data| C(Kinesis Stream: TruckTelemetry)
+    B --> D[DynamoDB Table: ClickStreamData]
+    D --> E[Streamlit UI]
+    C --> F[Kinesis Firehose]
+    F --> G[S3 Bucket]
+    G --> H[S3 Notification]
+    H --> I[Snowflake]
+    I --> J[Streamlit UI]
+```
+## Explanation of the Flowchart
+1. __Python Script__:
+   * Generates two types of data: ClickStream Data and TruckTelemetry Data.
+2. __Kinesis Streams__:
+   * ClickStream Data is sent to the ClickStreamData stream.
+   * TruckTelemetry Data is sent to the TruckTelemetry stream.
+3. __DynamoDB Table__:
+    * ClickStream Data from the Kinesis stream is stored in a DynamoDB table.
+4. __Streamlit UI__:
+    * Fetches ClickStream Data from DynamoDB and displays it.
+5. __Kinesis Firehose__:
+    * TruckTelemetry Data from the Kinesis stream is sent to S3 via Firehose.
+6. __S3 Bucket__:
+    * Stores raw TruckTelemetry Data.
+7. __S3 Notification__:
+    * Triggers Snowflake to ingest data from S3.
+8. __Snowflake__:
+    * Stores processed TruckTelemetry Data.
+9. __Streamlit UI__:
+    * Fetches TruckTelemetry Data from Snowflake and displays it.
+
+
+
 ## 3. Prerequisites
 Before running the project, ensure you have the following:
 
@@ -179,7 +365,7 @@ Before running the project, ensure you have the following:
 ### Snowflake
 - Snowflake account with a database and schema configured.
   
-### 1. Setting Up IAM Permissions for Lambda Functions
+### 2. Setting Up IAM Permissions for Lambda Functions
 ### KinesisToDynamoDBProcessor Lambda Function:
 The function requires the following IAM permissions to interact with Kinesis and DynamoDB:
 * __Kinesis__: `GetRecords`, `DescribeStream`, `ListShards` for ClickDataStream.
@@ -702,7 +888,7 @@ Add a queue policy to allow S3 to send notifications:
 3. Check Snowflake:
     * Verify that the file is auto-ingested into the Snowflake table (TRUCK_TELEMETRY_DATA).
 
-## Snowflake Setup
+## 3. Snowflake Setup
 ### 1. Create Table in Snowflake:
 The table will store the Truck Telemetry data. Use the following SQL command to create the table:
 
@@ -813,7 +999,7 @@ SELECT SYSTEM$PIPE_STATUS('truck_telemetry_pipe');
 SELECT * FROM TRUCK_TELEMETRY_DATA LIMIT 10;
 ```
 
-## Streamlit UI
+## 4. Streamlit UI
 This Streamlit UI code is designed to integrate real-time data from __AWS DynamoDB__ (for clickstream data) and __Snowflake__ (for truck telemetry data) to provide insights into e-commerce performance. Below is a detailed explanation of the code and its functionality:
 
 ### Code Explanation
@@ -944,187 +1130,6 @@ elif page == "Truck Telemetry Data":
 3. __Real-Time Updates__:
 * The app dynamically updates the displayed data and visualizations whenever the underlying data changes.
 
-## Python script 
-This Python script generates random __ClickStream__ and __Truck Telemetry__ data and sends it to __AWS Kinesis Data Streams__ for real-time processing. Below is a detailed explanation of the script and its functionality:
-
-### Script Overview
-1. Purpose 
-  * Generates random data for two types of streams:
-     * __ClickStream Data__: Simulates user interactions with e-commerce items (e.g., clicks on products).
-     * __Truck Telemetry Data__: Simulates real-time telemetry data from delivery trucks.
-  * Sends the generated data to AWS Kinesis Data Streams for further processing.
-2. Key Components:
-   * `Data Generation`: Functions to create random ClickStream and Truck Telemetry data.
-   * `AWS Kinesis Integration`: Sends the generated data to Kinesis streams.
-   * `Signal Handling`: Gracefully handles keyboard interrupts (e.g., Ctrl+C) to stop the script.
-### Code Explanation
-#### 1. Imports and AWS Kinesis Configuration
-```python
-import boto3
-import json
-import random
-import time
-from datetime import datetime
-import signal
-import sys
-
-# AWS Kinesis Configuration
-kinesis_client = boto3.client('kinesis', region_name='us-east-1')  # Replace with your region
-CLICK_STREAM_NAME = 'ClickDataStream'  # Replace with your Kinesis stream name
-TRUCK_STREAM_NAME = 'TruckTelemetry'   # Replace with your Kinesis stream name
-```
-* `boto3`: AWS SDK for Python, used to interact with AWS Kinesis.
-* `kinesis_client`: Initializes a connection to AWS Kinesis in the `us-east-1` region.
-* `Stream Names`: `CLICK_STREAM_NAME` and `TRUCK_STREAM_NAME` are the names of the Kinesis streams where data will be sent.
-#### 2. Generate Random ClickStream Data
-
-```python
-def generate_clickstream_data():
-    items = [
-        {"Item_ID": "MOB001", "Timestamp": datetime.utcnow().isoformat(), "Item_Name": "Mobile Phone", "Click_Counts": random.randint(100, 500)},
-        {"Item_ID": "LAP002", "Timestamp": datetime.utcnow().isoformat(),"Item_Name": "Laptop", "Click_Counts": random.randint(50, 300)},
-        {"Item_ID": "CAM003", "Timestamp": datetime.utcnow().isoformat(),"Item_Name": "Camera", "Click_Counts": random.randint(30, 200)}
-    ]
-    return random.choice(items)
-```
-* items: A list of dictionaries representing e-commerce items with random click counts.
-* random.choice(items): Randomly selects one item from the list to simulate user interaction.
-
-#### 3. Generate Random Truck Telemetry Data
-```python
-def generate_truck_telemetry_data():
-    truck_id = random.choice(["TRK001", "TRK002", "TRK003"])
-    telemetry_data = {
-        "TRUCK_ID": truck_id,
-        "LOAD_TIMESTAMP": datetime.utcnow().isoformat(),
-        "EFFECTIVE_START_DATE": datetime.utcnow().isoformat(),
-        "EFFECTIVE_END_DATE": None,  # NULL for current records
-        "IS_CURRENT": True,  # TRUE for current records
-        "GPS_LATITUDE": round(random.uniform(30.0, 40.0), 2),
-        "GPS_LONGITUDE": round(random.uniform(-120.0, -80.0), 2),
-        "GPS_ALTITUDE": round(random.uniform(0.0, 100.0), 2),
-        "GPS_SPEED": round(random.uniform(40.0, 70.0), 2),
-        "VEHICLE_SPEED": round(random.uniform(40.0, 70.0), 2),
-        "ENGINE_RPM": random.randint(2000, 3000),
-        "FUEL_LEVEL": round(random.uniform(50.0, 100.0), 2),
-        "ENGINE_TEMPERATURE": round(random.uniform(80.0, 100.0), 2),
-        "OIL_PRESSURE": round(random.uniform(30.0, 50.0), 2),
-        "BATTERY_VOLTAGE": round(random.uniform(12.0, 14.5), 2),
-        "ODOMETER_READING": round(random.uniform(80000.0, 120000.0), 2),
-        "FUEL_CONSUMPTION": round(random.uniform(10.0, 20.0), 2),
-        "BRAKE_STATUS": random.choice(["Good", "Needs Inspection"]),
-        "TIRE_PRESSURE_FRONT_LEFT": round(random.uniform(30.0, 35.0), 2),
-        "TIRE_PRESSURE_FRONT_RIGHT": round(random.uniform(30.0, 35.0), 2),
-        "TIRE_PRESSURE_REAR_LEFT": round(random.uniform(33.0, 37.0), 2),
-        "TIRE_PRESSURE_REAR_RIGHT": round(random.uniform(33.0, 37.0), 2),
-        "TRANSMISSION_STATUS": random.choice(["Operational", "Needs Maintenance"]),
-        "ENVIRONMENT_TEMPERATURE": round(random.uniform(10.0, 35.0), 2),
-        "ENVIRONMENT_HUMIDITY": round(random.uniform(20.0, 80.0), 2),
-        "ENVIRONMENT_PRESSURE": round(random.uniform(1000.0, 1020.0), 2),
-        "timestamp": datetime.utcnow().isoformat()
-    }
-    return telemetry_data
-```
-* `truck_id`: Randomly selects a truck ID from a predefined list.
-* `Telemetry Data`: Simulates various truck metrics (e.g., GPS coordinates, speed, fuel level, etc.).
-* `datetime.utcnow().isoformat()`: Adds a timestamp to the data.
-#### 4. Signal Handling
-```python
-def signal_handler(sig, frame):
-    print("\nKeyboard interrupt detected. Stopping the script gracefully...")
-    sys.exit(0)
-
-# Register the signal handler
-signal.signal(signal.SIGINT, signal_handler)
-```
-* `signal_handler`: Handles keyboard interrupts (e.g., Ctrl+C) to stop the script gracefully.
-* `signal.signal()`: Registers the handler for the SIGINT signal.
-
-####  5. Send Data to Kinesis
-```python
-def send_to_kinesis(stream_name, data):
-    response = kinesis_client.put_record(
-        StreamName=stream_name,
-        Data=json.dumps(data),
-        PartitionKey="partition_key"
-    )
-    return response
-```
-* `put_record()`: Sends a single record to the specified Kinesis stream.
-* `json.dumps(data)`: Converts the data dictionary to a JSON string.
-* `PartitionKey`: A key used to distribute data across shards in the stream.
-
-#### 6. Main Function
-```python
-def main():
-    while True:
-        try:
-            # Generate and send ClickStream data
-            clickstream_data = generate_clickstream_data()
-            click_response = send_to_kinesis(CLICK_STREAM_NAME, clickstream_data)
-            print(f"Sent ClickStream Data: {clickstream_data} | Response: {click_response}")
-
-            # Generate and send TruckTelemetry data
-            truck_data = generate_truck_telemetry_data()
-            truck_response = send_to_kinesis(TRUCK_STREAM_NAME, truck_data)
-            print(f"Sent TruckTelemetry Data: {truck_data} | Response: {truck_response}")
-
-            # Wait for 1 minute before sending the next batch of data
-            print("Generating and sending data...")
-            time.sleep(15)
-        
-        except KeyboardInterrupt:
-            print("\nScript stopped by user.")
-
-if __name__ == "__main__":
-    main()
-```
-* Infinite Loop: Continuously generates and sends data to Kinesis.
-* time.sleep(15): Waits for 15 seconds before generating the next batch of data.
-* Error Handling: Catches keyboard interrupts to stop the script gracefully.
-### How It Works
-1. Data Generation:
-   * Random ClickStream and Truck Telemetry data are generated using the respective functions.
-2. Data Sending:
-   * The generated data is sent to the appropriate Kinesis streams using the send_to_kinesis() function.
-3. Real-Time Simulation:
-   * The script runs indefinitely, simulating real-time data generation and streaming.
-4. Graceful Shutdown:
-   * The script can be stopped using Ctrl+C, and it will exit gracefully.
-
-## Unified Workflow Diagram
-```mermaid
-graph TD
-    A[Python Script] -->|Generates ClickStream Data| B(Kinesis Stream: ClickStreamData)
-    A -->|Generates TruckTelemetry Data| C(Kinesis Stream: TruckTelemetry)
-    B --> D[DynamoDB Table: ClickStreamData]
-    D --> E[Streamlit UI]
-    C --> F[Kinesis Firehose]
-    F --> G[S3 Bucket]
-    G --> H[S3 Notification]
-    H --> I[Snowflake]
-    I --> J[Streamlit UI]
-```
-## Explanation of the Flowchart
-1. __Python Script__:
-   * Generates two types of data: ClickStream Data and TruckTelemetry Data.
-2. __Kinesis Streams__:
-   * ClickStream Data is sent to the ClickStreamData stream.
-   * TruckTelemetry Data is sent to the TruckTelemetry stream.
-3. __DynamoDB Table__:
-    * ClickStream Data from the Kinesis stream is stored in a DynamoDB table.
-4. __Streamlit UI__:
-    * Fetches ClickStream Data from DynamoDB and displays it.
-5. __Kinesis Firehose__:
-    * TruckTelemetry Data from the Kinesis stream is sent to S3 via Firehose.
-6. __S3 Bucket__:
-    * Stores raw TruckTelemetry Data.
-7. __S3 Notification__:
-    * Triggers Snowflake to ingest data from S3.
-8. __Snowflake__:
-    * Stores processed TruckTelemetry Data.
-9. __Streamlit UI__:
-    * Fetches TruckTelemetry Data from Snowflake and displays it.
 
 ## Project Benefits
 
