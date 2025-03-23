@@ -50,11 +50,11 @@ __Data Visualization:__
      - Customer behavior (e.g., most-clicked products).
      - Delivery truck performance (e.g., fuel efficiency, maintenance needs).
 
-
-## Goal of our project
-
-- Our goal is to make our e-commerce business more successful by combining __online customer data__ with __delivery truck data__ in real-time.
-- This will help us improve __customer satisfaction__ and make our operations more efficient.
+## Project goals
+- Combine online customer data with delivery truck data in real-time to improve customer satisfaction and operational efficiency.
+- Enable faster and more reliable deliveries.
+- Reduce fuel and maintenance costs.
+- Provide real-time insights for data-driven decision-making.
 
 ##  Online Platform Optimization
 __What are we doing?__
@@ -65,7 +65,7 @@ __Why is this important?__
      - Improve the user experience on our website.
      - Create better marketing strategies for popular products like mobile phones, laptops, and cameras.
 
-__What data are we collecting?__
+__Data collected__
 - __Item ID__: A unique identifier for each product.
 - __Item Name__: The name of the product (e.g., mobile phone, laptop, camera).
 - __Click Count__: How many times customers click on a product.
@@ -81,7 +81,7 @@ __Why is this important?__
    - __Reduce maintenance costs__ by identifying issues before they become serious.
    - Ensure __safe and reliable deliveries__ for our customers.
 
-__What data are we collecting?__
+__Data collected__
 - `Truck ID`: A unique identifier for each truck.
 - `GPS Location`: Where the truck is (latitude, longitude, altitude) and how fast it’s moving.
 - `Vehicle Speed`: The real-time speed of the truck.
@@ -90,33 +90,6 @@ __What data are we collecting?__
 - `Fuel Consumption`: How much fuel the truck is using over time.
 - `Vehicle Health and Maintenance`: Information about the brakes, tire pressure, and transmission.
 - `Environmental Conditions`: Temperature, humidity, and atmospheric pressure around the truck.
-
-__How Does It All Work Together?__
-
-__Step 1: Collect Data__
-- We collect clickstream data from our website and truck telemetry data from IoT sensors.
-
-__Step 2: Process Data__
-- The data is sent to AWS Kinesis, a real-time data streaming service, for processing.
-
-__Step 3: Store Data__
-- Clickstream data is stored in DynamoDB, a fast and scalable database.
-- Truck telemetry data is stored in Snowflake, a powerful data warehouse.
-
-__Step 4: Analyze and Visualize Data__
-- We use Streamlit, a user-friendly tool, to create dashboards that show:
-    - Customer behavior on our website (e.g., most-clicked products).
-    - Delivery truck performance (e.g., fuel efficiency, maintenance needs).
-
-__Benefits of This System__
-- For Customers:
-  - Faster and more reliable deliveries.
-  - A better shopping experience on our website.
-
-- For the Business:
-  - Lower fuel and maintenance costs.
-  - Improved marketing strategies based on customer preferences.
-  - Real-time insights to make quick decisions.
 
 ## Workflow
 
