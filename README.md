@@ -1144,7 +1144,6 @@ elif page == "Truck Telemetry Data":
 ### 4. Improved Customer Experience
 - Tracks user interactions (clickstream data) to identify trends and improve product offerings.
 - Monitors delivery operations (truck telemetry) to ensure timely and efficient deliveries.
-- Monitors truck metrics to ensure timely and efficient deliveries.
 
 ### 5. Easy Visualization
 - The **Streamlit UI** provides an intuitive and interactive way to visualize data, making it accessible to non-technical users.
