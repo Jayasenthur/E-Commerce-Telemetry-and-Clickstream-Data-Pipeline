@@ -617,7 +617,6 @@ The `TruckDataProcessor` function is triggered by the Kinesis Data Stream (`Truc
 * Batch Window: Maximum time to wait before invoking the function (e.g., 60 seconds).
 
 ## Steps to Create an S3 Bucket 
-## 1. Create an S3 Bucket
    1. Go to the S3 Console:
         * Open the AWS S3 Console.
    2. Create a New Bucket:
