@@ -489,8 +489,12 @@ for record in event['Records']:
         data = json.loads(payload)
         logger.info(f"Processing record: {data}")
 ```
-* Iterates through each record in the Kinesis event.
-* Decodes the base64-encoded data from Kinesis and parses it into a JSON object.
+Decoding Process:
+*  Iterates through each record in the Kinesis event.
+* `base64.b64decode()`: Converts the base64-encoded string back to its original binary form.
+* `.decode('utf-8')`: Converts the binary data to a regular UTF-8 string (which is JSON text).
+* Parsing JSON: json.loads(): Converts the JSON string back into a Python dictionary that you can work with.
+
 
 ### 6. Validating Required Fields
 ```python
