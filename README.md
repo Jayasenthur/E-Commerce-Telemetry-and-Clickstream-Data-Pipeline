@@ -160,8 +160,8 @@ The schema follows __Type 2 Slowly Changing Dimensions (SCD)__ to maintain histo
 | `ENVIRONMENT_HUMIDITY`             | FLOAT             | Environmental humidity.                           |
 | `ENVIRONMENT_PRESSURE`             | FLOAT             | Environmental pressure.                           |
 
-## Steps to Set Up the Project
-## 1. Prerequisites
+## Steps to set up the Project
+## PREREQUISITES
 Before running the project, ensure you have the following:
 
 ### Tools and Libraries
@@ -179,7 +179,7 @@ Before running the project, ensure you have the following:
 ### Snowflake
 - Snowflake account with a database and schema configured.
 
-## 2. Python script 
+## DATA GENERATION :  Python script 
 This Python script generates random __ClickStream__ and __Truck Telemetry__ data and sends it to __AWS Kinesis Data Streams__ for real-time processing. Below is a detailed explanation of the script and its functionality:
 
 ### Script Overview
@@ -362,42 +362,7 @@ graph TD
 9. __Streamlit UI__:
     * Fetches TruckTelemetry Data from Snowflake and displays it.
   
-### 3. Setting Up IAM Permissions for Lambda Functions
-### KinesisToDynamoDBProcessor Lambda Function:
-The function requires the following IAM permissions to interact with Kinesis and DynamoDB:
-* __Kinesis__: `GetRecords`, `DescribeStream`, `ListShards` for ClickDataStream.
-* __DynamoDB__: `PutItem` for ClickStreamData.
-    
-```python
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "kinesis:GetRecords",
-        "kinesis:DescribeStream",
-        "kinesis:ListShards"
-      ],
-      "Resource": "arn:aws:kinesis:us-east-1:123456789012:stream/ClickDataStream"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "dynamodb:PutItem"
-      ],
-      "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ClickStreamData"
-    }
-  ]
-}
-```
-## Kinesis Trigger for Lambda Function
-### KinesisToDynamoDBProcessor:
-* Go to the __Lambda Console__.
-* Add a trigger for the `ClickDataStream` Kinesis stream.
-* Set the __Batch Size__ (e.g., 100) and __Batch Window__ (e.g., 60 seconds).
-
-## Purpose of the Lambda Function KinesisToDynamoDBProcessor
+## 3. DATA PROCESSING : Lambda Function KinesisToDynamoDBProcessor
 
 The Lambda function KinesisToDynamoDBProcessor plays a critical role in real-time data pipeline. Its purpose is to process Clickstream data from the Kinesis Data Stream (`ClickDataStream`) and store it in the DynamoDB table (`ClickStreamData`).
 1. __Real-Time Data Processing__:
@@ -594,13 +559,46 @@ The function writes the following item to the DynamoDB table:
 | Item_Name      | "Mobile Phone"                  |
 | Click_Counts   | 289      
 
-## Purpose of Lamda function TruckDataProcessor 
+### Setting Up IAM Permissions for Lambda Functions - KinesisToDynamoDBProcessor :
+The function requires the following IAM permissions to interact with Kinesis and DynamoDB:
+* __Kinesis__: `GetRecords`, `DescribeStream`, `ListShards` for ClickDataStream.
+* __DynamoDB__: `PutItem` for ClickStreamData.
+    
+```python
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "kinesis:GetRecords",
+        "kinesis:DescribeStream",
+        "kinesis:ListShards"
+      ],
+      "Resource": "arn:aws:kinesis:us-east-1:123456789012:stream/ClickDataStream"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:PutItem"
+      ],
+      "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ClickStreamData"
+    }
+  ]
+}
+```
+### Kinesis Trigger for Lambda Function - KinesisToDynamoDBProcessor:
+* Go to the __Lambda Console__.
+* Add a trigger for the `ClickDataStream` Kinesis stream.
+* Set the __Batch Size__ (e.g., 100) and __Batch Window__ (e.g., 60 seconds).
+
+## DATA PROCESSING : Lamda function TruckDataProcessor 
 The `TruckDataProcessor` Lambda function is designed to:
 * Process real-time Truck Telemetry data from the Kinesis Data Stream (`TruckTelemetry`).
 * Store the processed data in an __S3__ bucket (`kinesis-telemetry-data-bucket/telemetry-data/`) as JSON files.
 * Enable further processing of the data (e.g., loading into `Snowflake` for analysis).
 
-## IAM Permissions for the Lambda Function
+### IAM Permissions for the Lambda Function TruckDataProcessor 
 The function requires the following IAM permissions to interact with Kinesis and S3:
 ```python
 {
@@ -633,14 +631,14 @@ The function requires the following IAM permissions to interact with Kinesis and
 ## S3 Permissions:
 * `PutObject`: To upload JSON files to the S3 bucket.
 
-## Kinesis Trigger for Lambda Function
+## Kinesis Trigger for Lambda Function TruckDataProcessor 
 The `TruckDataProcessor` function is triggered by the Kinesis Data Stream (`TruckTelemetry`). Here’s how the trigger is configured:
 
 * Kinesis Stream: `TruckTelemetry`.
 * Batch Size: Number of records to process in a single invocation (e.g., 100).
 * Batch Window: Maximum time to wait before invoking the function (e.g., 60 seconds).
 
-## How the Lambda Function Works
+## How the Lambda Function TruckDataProcessor Works
 __Trigger__:
 The function is triggered whenever new records are added to the Kinesis Data Stream (`TruckTelemetry`).
 
@@ -656,7 +654,7 @@ __Data Storage__:
 __Error Handling__:
 The function includes error handling to ensure that any issues (e.g., invalid data, S3 errors) are logged and do not disrupt the pipeline.
 
-## Lambda Code Explanation
+## Lambda TruckDataProcessor Code Explanation
 ### 1. Importing Libraries
 ```python
 import json
@@ -797,7 +795,8 @@ Decoded Data:
 ### Output (S3 File):
 The function uploads the above JSON data to the S3 bucket with a unique file name, e.g., `telemetry-data/2025-03-17-15-35-54-597252.json`.
 
-### Steps to Create an S3 Bucket and Enable Notifications
+## DATA INGESTION FROM S3 INTO SNOWFLAKE
+## Steps to Create an S3 Bucket and Enable Notifications
 ## 1. Create an S3 Bucket
    1. Go to the S3 Console:
         * Open the AWS S3 Console.
@@ -885,8 +884,8 @@ Add a queue policy to allow S3 to send notifications:
 3. Check Snowflake:
     * Verify that the file is auto-ingested into the Snowflake table (TRUCK_TELEMETRY_DATA).
 
-## 3. Snowflake Setup
-### 1. Create Table in Snowflake:
+## Snowflake Setup
+## 1. Create Table in Snowflake:
 The table will store the Truck Telemetry data. Use the following SQL command to create the table:
 
 ```sql
@@ -935,7 +934,7 @@ CREATE OR REPLACE TABLE TRUCK_TELEMETRY_DATA (
 );
 ```
 
-### 2. Create an External Stage in Snowflake
+## 2. Create an External Stage in Snowflake
 An external stage points to the S3 bucket where the Truck Telemetry data is stored. Use the following SQL command to create the stage:
 ```sql
 -- Create an external stage pointing to the S3 bucket
@@ -996,7 +995,7 @@ SELECT SYSTEM$PIPE_STATUS('truck_telemetry_pipe');
 SELECT * FROM TRUCK_TELEMETRY_DATA LIMIT 10;
 ```
 
-## 4. Streamlit UI
+## DATA VISUALIZATION - Streamlit UI
 This Streamlit UI code is designed to integrate real-time data from __AWS DynamoDB__ (for clickstream data) and __Snowflake__ (for truck telemetry data) to provide insights into e-commerce performance. Below is a detailed explanation of the code and its functionality:
 
 ### Code Explanation
@@ -1126,7 +1125,6 @@ elif page == "Truck Telemetry Data":
 * For __Truck Telemetry Data__: The app fetches data from Snowflake and displays it in a table and line chart.
 3. __Real-Time Updates__:
 * The app dynamically updates the displayed data and visualizations whenever the underlying data changes.
-
 
 ## Project Benefits
 
