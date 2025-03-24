@@ -286,7 +286,8 @@ def send_to_kinesis(stream_name, data):
     )
     return response
 ```
-* `put_record()`: Sends a single record to the specified Kinesis stream.
+* Kinesis is a data streaming service that works with raw text-based data (like JSON, CSV, or plain strings).It does not understand Python dictionaries directly.
+* `put_record()`: The put_record() method in Kinesis only accepts strings or bytes (not Python dictionaries).By converting to JSON, we ensure Kinesis can store and forward the data correctly.
 * `json.dumps(data)`: Converts the data dictionary to a JSON string.
 * `PartitionKey`: A key used to distribute data across shards in the stream.
 
@@ -305,7 +306,7 @@ def main():
             truck_response = send_to_kinesis(TRUCK_STREAM_NAME, truck_data)
             print(f"Sent TruckTelemetry Data: {truck_data} | Response: {truck_response}")
 
-            # Wait for 1 minute before sending the next batch of data
+            # Wait for 15 secs before sending the next batch of data
             print("Generating and sending data...")
             time.sleep(15)
         
