@@ -8,48 +8,6 @@ Our goal is to enhance the performance of our e-commerce business by integrating
 
 This integration will enable us to optimize both the customer experience and logistics efficiency, ensuring timely deliveries and data-driven decision-making.
 
-## Key Components
-__Online Platform Optimization:__
-- Collect and analyze clickstream data to understand customer preferences and behavior.
-- Focus on key product categories: __mobile phones, laptops, and cameras__.
-- Use insights to improve the user experience and tailor marketing strategies.
-
-__Fleet Management and Logistics Optimization:__
-- Monitor real-time truck telemetry data using __IoT sensors__ installed in delivery trucks.
-- Track metrics such as GPS location, vehicle speed, engine diagnostics, and environmental conditions.
-- Use this data to optimize delivery routes, reduce fuel consumption, and proactively address maintenance issues.
-
-# Technologies Used
-This project implements a real-time data pipeline for processing __Clickstream Data__ and __Truck Telemetry Data__ using AWS services (Kinesis, Lambda, DynamoDB, S3, Firehose) and Snowflake for data storage and analysis. The data is visualized using a __Streamlit UI__.
-
-* __AWS Services:__
-     * __Kinesis Data Streams__: For real-time data ingestion.
-     * __Lambda Functions__: For data processing.
-     * __DynamoDB__: For storing Clickstream data
-     * __S3__ : For storing Truck Telemetry data.
-     * __Firehose__: For loading data from Kinesis to S3.
-     * __API Gateway__: For exposing the Truck Telemetry API.
-* __Snowflake__: For data warehousing and analysis.
-* __Streamlit__: For data visualization.
-* __Python__: For scripting and data generation.
-
-## How It Works
-__Data Collection:__
-- Clickstream data is collected from the website.
-- Truck telemetry data is collected from IoT sensors in delivery trucks.
-
-__Data Processing:__
-- Data is sent to __AWS Kinesis__, a real-time data streaming service, for processing.
-
-__Data Storage:__
-- Clickstream data is stored in __DynamoDB__, a fast and scalable NoSQL database.
-- Truck telemetry data is stored in __Snowflake__, a powerful data warehouse.
-
-__Data Visualization:__
-- A __Streamlit UI__ provides interactive dashboards to visualize:
-     - Customer behavior (e.g., most-clicked products).
-     - Delivery truck performance (e.g., fuel efficiency, maintenance needs).
-
 ## Project goals
 - Combine online customer data with delivery truck data in real-time to improve customer satisfaction and operational efficiency.
 - Enable faster and more reliable deliveries.
@@ -91,6 +49,20 @@ __Data collected__
 - `Vehicle Health and Maintenance`: Information about the brakes, tire pressure, and transmission.
 - `Environmental Conditions`: Temperature, humidity, and atmospheric pressure around the truck.
 
+# Technologies Used
+This project implements a real-time data pipeline for processing __Clickstream Data__ and __Truck Telemetry Data__ using AWS services (Kinesis, Lambda, DynamoDB, S3, Firehose) and Snowflake for data storage and analysis. The data is visualized using a __Streamlit UI__.
+
+* __AWS Services:__
+     * __Kinesis Data Streams__: For real-time data ingestion.
+     * __Lambda Functions__: For data processing.
+     * __DynamoDB__: For storing Clickstream data
+     * __S3__ : For storing Truck Telemetry data.
+     * __Firehose__: For loading data from Kinesis to S3.
+     * __API Gateway__: For exposing the Truck Telemetry API.
+* __Snowflake__: For data warehousing and analysis.
+* __Streamlit__: For data visualization.
+* __Python__: For scripting and data generation.
+
 ## Workflow
 
 ![Workflow Digram](https://github.com/Jayasenthur/E-Commerce-Telemetry-and-Clickstream-Data-Pipeline/blob/main/image.gif)
@@ -112,7 +84,8 @@ __Data collected__
 * Streamlit UI:
   * Fetches Clickstream data from DynamoDB.
   * Fetches Truck Telemetry data from Snowflake.
-  * Displays data with visualizations for analysis.
+  - Customer behavior (e.g., most-clicked products).
+  - Delivery truck performance (e.g., fuel efficiency, maintenance needs)..
 ### 6. __Historical Data Management__:
 * Snowflake table (`TRUCK_TELEMETRY_DATA`) uses __Type 2 Slowly Changing Dimensions (SCD)__ to maintain historical records of Truck Telemetry data.
 
