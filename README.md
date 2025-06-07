@@ -864,10 +864,26 @@ Add a queue policy to allow S3 to send notifications:
     * Verify that the file is auto-ingested into the Snowflake table (TRUCK_TELEMETRY_DATA).
 
 ## Snowflake Setup
+
+## Prequisites : Create warehouse(WH), Database and Schema 
+
+```sql
+CREATE WAREHOUSE TRUCK_TELEMETRY_WH
+  WITH WAREHOUSE_SIZE = 'XSMALL'
+  AUTO_SUSPEND = 60
+  AUTO_RESUME = TRUE
+  INITIALLY_SUSPENDED = TRUE;
+
+  CREATE DATABASE ECOMMERCE_DATA;
+
+  CREATE SCHEMA TRUCK_TELEMETRY
+  ```
 ## 1. Create Table in Snowflake:
 The table will store the Truck Telemetry data. Use the following SQL command to create the table:
 
 ```sql
+USE DATABASE ECOMMERCE_DATA;
+USE SCHEMA TRUCK_TELEMETRY
 CREATE OR REPLACE TABLE TRUCK_TELEMETRY_DATA (
     -- Truck Metadata
     TRUCK_ID STRING NOT NULL,
