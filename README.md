@@ -952,11 +952,12 @@ A pipe automates the process of loading data from the external stage into the Sn
 ```sql
 -- Create a pipe to auto-ingest data from S3 into Snowflake
 CREATE OR REPLACE PIPE truck_telemetry_pipe
-  AUTO_INGEST = TRUE
-  AS
-  COPY INTO TRUCK_TELEMETRY_DATA
-  FROM @truck_telemetry_stage
-  FILE_FORMAT = (TYPE = 'JSON');
+AUTO_INGEST = TRUE
+AS
+COPY INTO TRUCK_TELEMETRY_DATA
+FROM @truck_telemetry_stage
+FILE_FORMAT = (TYPE = 'JSON')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;
 ```
 Parameters:
 * AUTO_INGEST: Enables automatic ingestion of data from S3 using SQS notifications.
